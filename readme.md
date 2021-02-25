@@ -10,5 +10,11 @@ This repo is an implementation of Reccurrent Attention Model (RAM) from [Recurre
 
 ## Usage
 
-Step debug on a CPU Device, Cuda can not debug
-See detail in `train.py` for hyperparameters setting and run the following command with arguments:
+- Step debug on a CPU device, Cuda can not.
+- python3 ./train.py
+
+## Help you
+
+- Using original source to debug can help you understand more.
+- https://www.mediafire.com/file/rb3f42h0jbord11/recurrent-visual-attention.tar.xz
+- python3 ./main.py --use_gpu False --is_train True --num_patches 2 --glimpse_scale 2
