@@ -1,7 +1,7 @@
 # Reccurrent Attention Model
 
 ## Introduction
-This repo is an implementation of Reccurrent Attention Model (RAM) from [Recurrent Models of Visual Attention](http://papers.nips.cc/paper/5542-recurrent-models-of-visual-attention.pdf). It with a lot of comments and set image show let you easier to understand.
+This repo is an implementation of Reccurrent Attention Model from [Recurrent Models of Visual Attention](http://papers.nips.cc/paper/5542-recurrent-models-of-visual-attention.pdf). It with a lot of comments and set image show let you easier to understand.
 
 ## Requirements
 

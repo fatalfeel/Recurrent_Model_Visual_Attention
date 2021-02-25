@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from torch.nn import functional as tnf
 from modules import GlimpseNetwork, LocationNetwork, CoreNetwork, ActionNetwork, BaselineNetwork
 
-class RAM(nn.Module):
+class ModelVT(nn.Module):
     """Reccurrent Attention Model
 
     Reccurrent Attention Model described in the paper
@@ -50,7 +50,7 @@ class RAM(nn.Module):
                  feature_size,
                  glimpse_feature_size,
                  hidden_size):
-        super(RAM, self).__init__()
+        super(ModelVT, self).__init__()
 
         self.location_size = location_size
         self.glimpse_size = glimpse_size

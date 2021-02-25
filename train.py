@@ -6,7 +6,7 @@ from torch.nn import functional as tnf
 from torchvision import datasets, transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-from ram import RAM
+from modelvt import ModelVT
 from utils import draw_locations
 
 def str2bool(v):
@@ -15,7 +15,7 @@ def str2bool(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
 
-parser = argparse.ArgumentParser(description='RAM MNIST Example')
+parser = argparse.ArgumentParser(description='Args of Train')
 
 parser.add_argument('--batch-size', type=int, default=20, metavar='N',
                     help='input batch size for training (default: 20)')
@@ -91,13 +91,13 @@ def Loss_Functions(labels, prob_logits, location_log_probs, baselines, celoss_fn
 
     return pred_loss + baseline_loss + reinforce_mean
 
-def train(ram_model, epoch, train_loader, celoss_fn):
-    ram_model.train()
+def train(modelRAM, epoch, train_loader, celoss_fn):
+    modelRAM.train()
     train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
         data = data.to(device)
         optimizer.zero_grad()
-        prob_logits, _, location_log_probs, baselines = ram_model(data)
+        prob_logits, _, location_log_probs, baselines = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
         loss = Loss_Functions(labels, prob_logits, location_log_probs, baselines, celoss_fn)
         loss.backward()
@@ -112,18 +112,18 @@ def train(ram_model, epoch, train_loader, celoss_fn):
     print('====> Epoch: {} Average loss: {:.4f}'.format(
           epoch, train_loss / train_size))
 
-def test(ram_model, epoch, data_source, size):
-    ram_model.eval()
+def test(modelRAM, epoch, data_source, size):
+    modelRAM.eval()
     total_correct = 0.0
     with torch.no_grad():
         for batch_idx, (data, labels) in enumerate(data_source):
             data = data.to(device)
-            action_logits, _, _, _ = ram_model(data)
+            action_logits, _, _, _ = modelRAM(data)
             predictions = torch.argmax(action_logits, dim=1)
             total_correct += torch.sum((labels == predictions)).item()
     accuracy = total_correct / size
     image = data[0:1]
-    _, locations, _, _ = ram_model(image)
+    _, locations, _, _ = modelRAM(image)
     draw_locations(image.numpy()[0][0], locations.detach().numpy()[0], epoch=epoch)
     return accuracy
 
@@ -141,20 +141,20 @@ if __name__ == "__main__":
     valid_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=valid_sampler, **kwargs)
     test_loader = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True, **kwargs)
 
-    ram_model = RAM(location_size=args.location_size,
-                    location_std=args.location_std,
-                    num_classes=args.num_classes,
-                    glimpse_size=args.glimpse_size,
-                    num_glimpses=args.num_glimpses,
-                    num_scales=args.num_scales,
-                    feature_size=args.feature_size,
-                    glimpse_feature_size=args.glimpse_feature_size,
-                    hidden_size=args.hidden_size).to(device)
+    modelRAM = ModelVT(location_size=args.location_size,
+                       location_std=args.location_std,
+                       num_classes=args.num_classes,
+                       glimpse_size=args.glimpse_size,
+                       num_glimpses=args.num_glimpses,
+                       num_scales=args.num_scales,
+                       feature_size=args.feature_size,
+                       glimpse_feature_size=args.glimpse_feature_size,
+                       hidden_size=args.hidden_size).to(device)
 
     # Compute learning rate decay rate
     lr_decay_rate = args.lr / args.epochs
-    # optimizer = optim.SGD(ram_model.parameters(), lr=args.lr, momentum=0.9)
-    optimizer = optim.Adam(ram_model.parameters(), lr=args.lr)
+    # optimizer = optim.SGD(modelRAM.parameters(), lr=args.lr, momentum=0.9)
+    optimizer = optim.Adam(modelRAM.parameters(), lr=args.lr)
     # scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', factor=0.5, verbose=True, patience=5)
 
@@ -163,13 +163,13 @@ if __name__ == "__main__":
     best_valid_accuracy, test_accuracy = 0, 0
 
     for epoch in range(1, args.epochs + 1):
-        train(ram_model, epoch, train_loader, celoss_fn)
-        accuracy = test(ram_model, epoch, valid_loader, valid_size)
+        train(modelRAM, epoch, train_loader, celoss_fn)
+        accuracy = test(modelRAM, epoch, valid_loader, valid_size)
         scheduler.step(accuracy)
         print('====> Validation set accuracy: {:.2%}'.format(accuracy))
         if accuracy > best_valid_accuracy:
             best_valid_accuracy = accuracy
-            test_accuracy = test(ram_model, epoch, test_loader, len(test_loader.dataset))
-            # torch.save(ram_model, 'save/best_model')
+            test_accuracy = test(modelRAM, epoch, test_loader, len(test_loader.dataset))
+            # torch.save(modelRAM, 'save/best_model')
             print('====> Test set accuracy: {:.2%}'.format(test_accuracy))
     print('====> Test set accuracy: {:.2%}'.format(test_accuracy))
