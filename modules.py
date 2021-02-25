@@ -25,7 +25,6 @@ class GlimpseNetwork(nn.Module):
         - output of shape (batch_size, output_size): tensor containing features
           of glimpse g described in the paper
     """
-
     def __init__(self, input_size, location_size, internal_size, output_size):
         super(GlimpseNetwork, self).__init__()
         self.fc_g = nn.Linear(input_size, internal_size)
@@ -59,7 +58,6 @@ class CoreNetwork(nn.Module):
         - h of shape (batch_size, hidden_size): tensor containing the current
           hidden state
     """
-
     def __init__(self, input_size, hidden_size):
         super(CoreNetwork, self).__init__()
 
@@ -93,24 +91,31 @@ class LocationNetwork(nn.Module):
         - log_p of shape (batch_size, 1): tensor containing the log probability
           of the location
     """
-
+    '''Paper original: The location network outputs the mean of the location policy at timetand is defined as 
+       fl(h) = Linear(h) where his the state of the core network/RNN 
+       New way: fl(fc(h))'''
     def __init__(self, input_size, output_size, std=1e-3):
         super(LocationNetwork, self).__init__()
 
-        self.std = std
-        self.fc = nn.Linear(input_size, output_size)
+        self.std    = std
+        #self.fc    = nn.Linear(input_size, output_size)
+        hiddensize  = input_size // 2
+        self.fc     = nn.Linear(input_size, hiddensize)
+        self.fl     = nn.Linear(hiddensize, output_size)
 
     def forward(self, ht):
-        mu = torch.tanh(self.fc(ht.detach()))
+        #mu = torch.tanh(self.fc(ht.detach()))
+        feature = tnf.relu(self.fc(ht.detach()))
+        mu      = torch.tanh(self.fl(feature))
+
         if self.training:
-            distribution = torch.distributions.Normal(mu, self.std)
-            output = torch.clamp(distribution.sample(), -1.0, 1.0)
-            log_p = distribution.log_prob(output)
-            log_p = torch.sum(log_p, dim=1)
+            distribution    = torch.distributions.Normal(mu, self.std)
+            output          = torch.clamp(distribution.sample(), -1.0, 1.0)
+            log_p           = distribution.log_prob(output)
+            log_p           = torch.sum(log_p, dim=1)
         else:
-            # output = tnf.tanh(mu)
-            output = mu
-            log_p = torch.ones(output.size(0))
+            output  = mu
+            log_p   = torch.ones(output.size(0))
 
         return output, log_p
 
@@ -132,7 +137,6 @@ class ActionNetwork(nn.Module):
         - logit of shape (batch_size, output_size): tensor containing the logit
           of the predicted actions.
     """
-
     def __init__(self, input_size, output_size):
         super(ActionNetwork, self).__init__()
         self.fc = nn.Linear(input_size, output_size)
@@ -162,7 +166,6 @@ class BaselineNetwork(nn.Module):
         - output of shape (batch_size, output_size): tensor containing the
           predicted rewards
     """
-
     def __init__(self, input_size, output_size):
         super(BaselineNetwork, self).__init__()
         self.fc = nn.Linear(input_size, output_size)
