@@ -103,7 +103,7 @@ class ModelVT(nn.Module):
 
             #glimpse = tnf.grid_sample(data, grid).view(batch_size, -1)
             sample = tnf.grid_sample(data, grid, align_corners=True)
-            #show_MNIST(sample)
+            #self.show_MNIST(sample)
             glimpse = sample.view(batch_size, -1)
 
             #output[:, i * output_size*output_size: (i + 1) * output_size*output_size] = glimpse
