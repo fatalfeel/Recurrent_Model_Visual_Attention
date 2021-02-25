@@ -73,36 +73,35 @@ def show_MNIST(self, img):
     plt.axis('off')
     plt.show()
 
+#practice (i.) affine grid & grid sample source - affinegrid_gridsample.zip
 def Retina(data, location, output_size, nsc):
     # Transform image to retina representation
-    # Assume that width = height and channel = 1
-
     batch_size, input_size = data.size(0), data.size(2) - 1
-    # assert output_size * 2**(nsc - 1) <= input_size, "output_size * 2**(nsc-1) should smaller than or equal to input_size"
-
-    # construct theta for affine transformation
-    theta = torch.zeros(batch_size, 2, 3)
-    theta[:, :, 2] = location
 
     scale = output_size / input_size
-    originsize = torch.Size([batch_size, 1, output_size, output_size])
+    orisize = torch.Size([batch_size, 1, output_size, output_size])
 
-    output = torch.zeros(batch_size, output_size * output_size * nsc)
+    # construct theta for affine transformation
+    theta = torch.zeros(batch_size, 2, 3).to(device)
+    theta[:, :, 2] = location
+    output = torch.zeros(batch_size, output_size * output_size * nsc).to(device)
 
     for i in range(nsc):
+        # theta is location shift
         theta[:, 0, 0] = scale
         theta[:, 1, 1] = scale
-        grid = tnf.affine_grid(theta, originsize, align_corners=True)  # theta is location shift
+
+        grid = tnf.affine_grid(theta, orisize, align_corners=True)
 
         # glimpse = tnf.grid_sample(data, grid).view(batch_size, -1)
         sample = tnf.grid_sample(data, grid, align_corners=True)
         # show_MNIST(sample)
         glimpse = sample.view(batch_size, -1)
 
-        #output[:, i * output_size * output_size: (i + 1) * output_size * output_size] = glimpse
-        fillsize    = output_size * output_size
-        pos_start   =  i        * fillsize
-        pos_end     = (i + 1)   * fillsize
+        # output[:, i * output_size*output_size: (i + 1) * output_size*output_size] = glimpse
+        fillsize = output_size * output_size
+        pos_start = i * fillsize
+        pos_end = (i + 1) * fillsize
         output[:, pos_start: pos_end] = glimpse
         scale *= 2.0
 

@@ -95,7 +95,8 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
     modelRAM.train()
     train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
-        data = data.to(device)
+        data    = data.to(device)
+        labels  = labels.to(device)
         optimizer.zero_grad()
         prob_logits, _, location_log_probs, baselines = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
@@ -117,14 +118,15 @@ def test(modelRAM, epoch, data_source, size):
     total_correct = 0.0
     with torch.no_grad():
         for batch_idx, (data, labels) in enumerate(data_source):
-            data = data.to(device)
+            data    = data.to(device)
+            labels  = labels.to(device)
             action_logits, _, _, _ = modelRAM(data)
             predictions = torch.argmax(action_logits, dim=1)
             total_correct += torch.sum((labels == predictions)).item()
     accuracy = total_correct / size
     image = data[0:1]
     _, locations, _, _ = modelRAM(image)
-    draw_locations(image.numpy()[0][0], locations.detach().numpy()[0], epoch=epoch)
+    draw_locations(image.cpu().numpy()[0][0], locations.detach().cpu().numpy()[0], epoch=epoch)
     return accuracy
 
 if __name__ == "__main__":
@@ -149,7 +151,8 @@ if __name__ == "__main__":
                        num_scales=args.num_scales,
                        feature_size=args.feature_size,
                        glimpse_feature_size=args.glimpse_feature_size,
-                       hidden_size=args.hidden_size).to(device)
+                       hidden_size=args.hidden_size,
+                       model_device=device).to(device)
 
     # Compute learning rate decay rate
     lr_decay_rate = args.lr / args.epochs

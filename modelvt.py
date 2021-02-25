@@ -49,22 +49,23 @@ class ModelVT(nn.Module):
                  num_scales,
                  feature_size,
                  glimpse_feature_size,
-                 hidden_size):
+                 hidden_size,
+                 model_device):
         super(ModelVT, self).__init__()
 
-        self.location_size = location_size
-        self.glimpse_size = glimpse_size
-        self.num_glimpses = num_glimpses
-        self.num_scales = num_scales
-
+        self.location_size  = location_size
+        self.glimpse_size   = glimpse_size
+        self.num_glimpses   = num_glimpses
+        self.num_scales     = num_scales
         # compute input size after retina encoding
-        self.input_size = glimpse_size * glimpse_size * num_scales
+        self.input_size     = glimpse_size * glimpse_size * num_scales
 
         self.glimpse_network    = GlimpseNetwork(self.input_size, location_size, feature_size, glimpse_feature_size)
         self.core_network       = CoreNetwork(glimpse_feature_size, hidden_size)
         self.baseline_network   = BaselineNetwork(hidden_size, 1) #reinforcement net
         self.fa                 = ActionNetwork(hidden_size, num_classes)
         self.fl                 = LocationNetwork(hidden_size, location_size, location_std)
+        self.device             = model_device
 
     '''def init_location(self, batch_size):
         return torch.zeros(batch_size, self.location_size)'''
@@ -85,19 +86,20 @@ class ModelVT(nn.Module):
         #Transform image to retina representation
         batch_size, input_size = data.size(0), data.size(2)-1
 
+        scale   = output_size / input_size
+        orisize = torch.Size([batch_size, 1, output_size, output_size])
+
         # construct theta for affine transformation
-        theta = torch.zeros(batch_size, 2, 3)
-        theta[:, :, 2] = location
-
-        scale       = output_size / input_size
-        originsize  = torch.Size([batch_size, 1, output_size, output_size])
-
-        output = torch.zeros(batch_size, output_size * output_size * nsc)
+        theta           = torch.zeros(batch_size, 2, 3).to(self.device)
+        theta[:, :, 2]  = location
+        output          = torch.zeros(batch_size, output_size * output_size * nsc).to(self.device)
 
         for i in range(nsc):
+            # theta is location shift
             theta[:, 0, 0] = scale
             theta[:, 1, 1] = scale
-            grid = tnf.affine_grid(theta, originsize, align_corners=True) #theta is location shift
+
+            grid = tnf.affine_grid(theta, orisize, align_corners=True)
 
             #glimpse = tnf.grid_sample(data, grid).view(batch_size, -1)
             sample = tnf.grid_sample(data, grid, align_corners=True)
@@ -114,15 +116,15 @@ class ModelVT(nn.Module):
         return output.detach()
 
     def forward(self, data):
-        batch_size = data.size(0)
-        ht = self.core_network.init_hidden(batch_size)
+        batch_size  = data.size(0)
+        #ht          = self.core_network.init_hidden(batch_size)
+        ht          = torch.zeros(batch_size, self.core_network.hidden_size).to(self.device)
 
         #location = self.init_location(batch_size)
-        location = torch.zeros(batch_size, self.location_size)
-
-        location_log_probs = torch.empty(batch_size, self.num_glimpses)
-        locations = torch.empty(batch_size, self.num_glimpses, self.location_size)
-        baselines = torch.empty(batch_size, self.num_glimpses)
+        location            = torch.zeros(batch_size, self.location_size).to(self.device)
+        location_log_probs  = torch.empty(batch_size, self.num_glimpses).to(self.device)
+        locations           = torch.empty(batch_size, self.num_glimpses, self.location_size).to(self.device)
+        baselines           = torch.empty(batch_size, self.num_glimpses).to(self.device)
 
         for i in range(self.num_glimpses):
             locations[:, i] = location

@@ -60,16 +60,16 @@ class CoreNetwork(nn.Module):
     """
     def __init__(self, input_size, hidden_size):
         super(CoreNetwork, self).__init__()
-
-        self.hidden_size = hidden_size
-        self.rnn_cell = nn.RNNCell(input_size, hidden_size, nonlinearity='relu')
+        self.hidden_size    = hidden_size
+        self.rnn_cell       = nn.RNNCell(input_size, hidden_size, nonlinearity='relu')
 
     def forward(self, g, prev_h):
         h = self.rnn_cell(g, prev_h)
         return h
 
-    def init_hidden(self, batch_size):
-        return torch.zeros(batch_size, self.hidden_size)
+    '''def init_hidden(self, batch_size):
+        hidden_layer = torch.zeros(batch_size, self.hidden_size).to(self.device)
+        return hidden_layer'''
 
 class LocationNetwork(nn.Module):
     """Location network
@@ -171,5 +171,5 @@ class BaselineNetwork(nn.Module):
         self.fc = nn.Linear(input_size, output_size)
 
     def forward(self, ht):
-        output = torch.sigmoid(self.fc(ht.detach()))
+        output  = torch.sigmoid(self.fc(ht.detach()))
         return output
