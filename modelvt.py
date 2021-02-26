@@ -3,7 +3,7 @@ import torch.nn as nn
 import torchvision
 import matplotlib.pyplot as plt
 from torch.nn import functional as tnf
-from modules import GlimpseNetwork, LocationNetwork, CoreNetwork, ActionNetwork, BaselineNetwork
+from modules import GlimpseNetwork, LocationNetwork, CoreNetwork, ActorNetwork, CriticNetwork
 
 class ModelVT(nn.Module):
     """Reccurrent Attention Model
@@ -62,9 +62,9 @@ class ModelVT(nn.Module):
 
         self.glimpse_network    = GlimpseNetwork(self.input_size, location_size, feature_size, glimpse_feature_size)
         self.core_network       = CoreNetwork(glimpse_feature_size, hidden_size)
-        self.baseline_network   = BaselineNetwork(hidden_size, 1) #reinforcement net
-        self.fa                 = ActionNetwork(hidden_size, num_classes)
         self.fl                 = LocationNetwork(hidden_size, location_size, location_std)
+        self.fa                 = ActorNetwork(hidden_size, num_classes)
+        self.critic_network     = CriticNetwork(hidden_size, 1) #CriticNetwork = BaselineNetwork
         self.device             = model_device
 
     '''def init_location(self, batch_size):
@@ -125,7 +125,7 @@ class ModelVT(nn.Module):
         location            = torch.zeros(batch_size, self.location_size).to(self.device)
         location_log_probs  = torch.empty(batch_size, self.num_glimpses).to(self.device)
         locations           = torch.empty(batch_size, self.num_glimpses, self.location_size).to(self.device)
-        baselines           = torch.empty(batch_size, self.num_glimpses).to(self.device)
+        critic_values       = torch.empty(batch_size, self.num_glimpses).to(self.device)
 
         for i in range(self.num_glimpses):
             locations[:, i] = location
@@ -134,10 +134,10 @@ class ModelVT(nn.Module):
             gt                          = self.glimpse_network(glimpse, location)
             ht, ct                      = self.core_network(gt, ht, ct)
             location, log_prob          = self.fl(ht)
-            baseline                    = self.baseline_network(ht)
+            cvalue                      = self.critic_network(ht)
             location_log_probs[:, i]    = log_prob
-            baselines[:, i]             = baseline.squeeze()
+            critic_values[:, i]         = cvalue.squeeze()
 
-        prob_logits = self.fa(ht) #classifier
+        actions = self.fa(ht) #classifier
 
-        return prob_logits, locations, location_log_probs, baselines
+        return actions, locations, location_log_probs, critic_values

@@ -122,7 +122,7 @@ class LocationNetwork(nn.Module):
         return output, log_p
 
 #in ppo its a actor network
-class ActionNetwork(nn.Module):
+class ActorNetwork(nn.Module):
     """Action network
 
     Action network described in the paper
@@ -141,7 +141,7 @@ class ActionNetwork(nn.Module):
           of the predicted actions.
     """
     def __init__(self, input_size, output_size):
-        super(ActionNetwork, self).__init__()
+        super(ActorNetwork, self).__init__()
         self.fc = nn.Linear(input_size, output_size)
 
     def forward(self, ht):
@@ -150,7 +150,7 @@ class ActionNetwork(nn.Module):
         return logit
 
 #in ppo its a critic network
-class BaselineNetwork(nn.Module):
+class CriticNetwork(nn.Module):
     """Baseline network
 
     Baseline network described in the paper
@@ -171,7 +171,7 @@ class BaselineNetwork(nn.Module):
           predicted rewards
     """
     def __init__(self, input_size, output_size):
-        super(BaselineNetwork, self).__init__()
+        super(CriticNetwork, self).__init__()
         self.fc = nn.Linear(input_size, output_size)
 
     def forward(self, ht):

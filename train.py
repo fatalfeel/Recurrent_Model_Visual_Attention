@@ -75,18 +75,18 @@ device = torch.device("cuda:0" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
-def Loss_Functions(labels, prob_logits, location_log_probs, baselines, celoss_fn):
-    predictions     = torch.argmax(prob_logits, dim=1, keepdim=True) #return the index of max number in a row
-    pred_loss       = celoss_fn(prob_logits, labels.squeeze())  # CrossEntropyLoss
+def Loss_Functions(labels, actions, location_log_probs, critic_values, celoss_fn):
+    predictions     = torch.argmax(actions, dim=1, keepdim=True) #return the index of max number in a row
+    pred_loss       = celoss_fn(actions, labels.squeeze())  # CrossEntropyLoss
 
-    num_repeats     = baselines.size(-1)
+    num_repeats     = critic_values.size(-1)
     rewards         = (labels == predictions.detach()).float().repeat(1, num_repeats)
-    #baseline_loss   = tnf.mse_loss(rewards, baselines)
-    baseline_loss   = tnf.mse_loss(baselines, rewards)  #ppo value_losses
+    #baseline_loss   = tnf.mse_loss(rewards, critic_values)
+    baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
 
-    rb_difference   = rewards - baselines.detach()
+    rc_difference   = rewards - critic_values.detach()
     #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rb_remain, dim=1))
-    reinforce_loss  = torch.sum(-location_log_probs * rb_difference, dim=1)
+    reinforce_loss  = torch.sum(-location_log_probs * rc_difference, dim=1)
     reinforce_mean  = torch.mean(reinforce_loss)
 
     return pred_loss + baseline_loss + reinforce_mean
@@ -98,17 +98,16 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         data    = data.to(device)
         labels  = labels.to(device)
         optimizer.zero_grad()
-        prob_logits, _, location_log_probs, baselines = modelRAM(data)
+        actions, _, location_log_probs, critic_values = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
-        loss = Loss_Functions(labels, prob_logits, location_log_probs, baselines, celoss_fn)
+        loss = Loss_Functions(labels, actions, location_log_probs, critic_values, celoss_fn)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), train_size,
-                100. * batch_idx / len(train_loader),
-                loss.item() / len(data)))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), train_size,
+                                                                            100. * batch_idx / len(train_loader),
+                                                                            loss.item() / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(
           epoch, train_loss / train_size))
@@ -120,8 +119,8 @@ def test(modelRAM, epoch, data_source, size):
         for batch_idx, (data, labels) in enumerate(data_source):
             data    = data.to(device)
             labels  = labels.to(device)
-            action_logits, _, _, _ = modelRAM(data)
-            predictions = torch.argmax(action_logits, dim=1)
+            actions, _, _, _ = modelRAM(data)
+            predictions = torch.argmax(actions, dim=1)
             total_correct += torch.sum((labels == predictions)).item()
     accuracy = total_correct / size
     image = data[0:1]
