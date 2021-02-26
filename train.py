@@ -80,7 +80,7 @@ def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, cel
     pred_loss       = celoss_fn(batch_actions, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
-    rewards         = (labels == predictions.detach()).float().repeat(1, num_repeats)
+    rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
     #baseline_loss   = tnf.mse_loss(rewards, critic_values)
     baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
 
