@@ -75,9 +75,9 @@ device = torch.device("cuda:0" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
-def Loss_Functions(labels, actions, location_log_probs, critic_values, celoss_fn):
-    predictions     = torch.argmax(actions, dim=1, keepdim=True) #return the index of max number in a row
-    pred_loss       = celoss_fn(actions, labels.squeeze())  # CrossEntropyLoss
+def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn):
+    predictions     = torch.argmax(batch_actions, dim=1, keepdim=True) #return the index of max number in a row
+    pred_loss       = celoss_fn(batch_actions, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
     rewards         = (labels == predictions.detach()).float().repeat(1, num_repeats)
@@ -98,9 +98,9 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         data    = data.to(device)
         labels  = labels.to(device)
         optimizer.zero_grad()
-        actions, _, location_log_probs, critic_values = modelRAM(data)
+        batch_actions, _, location_log_probs, critic_values = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
-        loss = Loss_Functions(labels, actions, location_log_probs, critic_values, celoss_fn)
+        loss = Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -119,8 +119,8 @@ def test(modelRAM, epoch, data_source, size):
         for batch_idx, (data, labels) in enumerate(data_source):
             data    = data.to(device)
             labels  = labels.to(device)
-            actions, _, _, _ = modelRAM(data)
-            predictions = torch.argmax(actions, dim=1)
+            batch_actions, _, _, _ = modelRAM(data)
+            predictions = torch.argmax(batch_actions, dim=1)
             total_correct += torch.sum((labels == predictions)).item()
     accuracy = total_correct / size
     image = data[0:1]

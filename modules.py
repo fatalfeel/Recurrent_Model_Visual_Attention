@@ -146,8 +146,8 @@ class ActorNetwork(nn.Module):
 
     def forward(self, ht):
         '''logit = tnf.log_softmax(self.fc(ht), dim=1) #CrossEntropyLoss combines log_softmax and NLLLoss'''
-        logit = self.fc(ht)
-        return logit
+        batch_actions = self.fc(ht)
+        return batch_actions
 
 #in ppo its a critic network
 class CriticNetwork(nn.Module):

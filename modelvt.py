@@ -138,6 +138,6 @@ class ModelVT(nn.Module):
             location_log_probs[:, i]    = log_prob
             critic_values[:, i]         = cvalue.squeeze()
 
-        actions = self.fa(ht) #classifier
+        batch_actions = self.fa(ht) #classifier
 
-        return actions, locations, location_log_probs, critic_values
+        return batch_actions, locations, location_log_probs, critic_values
