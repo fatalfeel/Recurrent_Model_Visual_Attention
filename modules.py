@@ -141,10 +141,10 @@ class ActionNetwork(nn.Module):
         super(ActionNetwork, self).__init__()
         self.fc = nn.Linear(input_size, output_size)
 
-    def forward(self, x):
-        logit = self.fc(x)
+    def forward(self, ht):
+        #logit = self.fc(ht)
+        logit = tnf.log_softmax(self.fc(ht), dim=1)
         return logit
-
 
 class BaselineNetwork(nn.Module):
     """Baseline network
