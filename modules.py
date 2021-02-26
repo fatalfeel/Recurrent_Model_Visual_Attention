@@ -142,7 +142,7 @@ class ActionNetwork(nn.Module):
         self.fc = nn.Linear(input_size, output_size)
 
     def forward(self, ht):
-        #logit = tnf.log_softmax(self.fc(ht), dim=1) #CrossEntropyLoss combines log_softmax and NLLLoss
+        '''logit = tnf.log_softmax(self.fc(ht), dim=1) #CrossEntropyLoss combines log_softmax and NLLLoss'''
         logit = self.fc(ht)
         return logit
 
