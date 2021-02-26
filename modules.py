@@ -119,6 +119,7 @@ class LocationNetwork(nn.Module):
 
         return output, log_p
 
+#in ppo its a actor network
 class ActionNetwork(nn.Module):
     """Action network
 
@@ -146,6 +147,7 @@ class ActionNetwork(nn.Module):
         logit = self.fc(ht)
         return logit
 
+#in ppo its a critic network
 class BaselineNetwork(nn.Module):
     """Baseline network
 
