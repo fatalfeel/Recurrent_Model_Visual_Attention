@@ -119,6 +119,7 @@ class ModelVT(nn.Module):
         batch_size  = data.size(0)
         #ht          = self.core_network.init_hidden(batch_size)
         ht          = torch.zeros(batch_size, self.core_network.hidden_size).to(self.device)
+        ct          = torch.zeros(batch_size, self.core_network.hidden_size).to(self.device)
 
         #location = self.init_location(batch_size)
         location            = torch.zeros(batch_size, self.location_size).to(self.device)
@@ -129,13 +130,13 @@ class ModelVT(nn.Module):
         for i in range(self.num_glimpses):
             locations[:, i] = location
             #paper p4. low-resolution representation as a glimpse
-            glimpse = self.Retina(data, location.detach(), self.glimpse_size, self.num_scales)
-            gt = self.glimpse_network(glimpse, location)
-            ht = self.core_network(gt, ht)
-            location, log_prob = self.fl(ht)
-            baseline = self.baseline_network(ht)
-            location_log_probs[:, i] = log_prob
-            baselines[:, i] = baseline.squeeze()
+            glimpse                     = self.Retina(data, location.detach(), self.glimpse_size, self.num_scales)
+            gt                          = self.glimpse_network(glimpse, location)
+            ht, ct                      = self.core_network(gt, ht, ct)
+            location, log_prob          = self.fl(ht)
+            baseline                    = self.baseline_network(ht)
+            location_log_probs[:, i]    = log_prob
+            baselines[:, i]             = baseline.squeeze()
 
         prob_logits = self.fa(ht) #classifier
 
