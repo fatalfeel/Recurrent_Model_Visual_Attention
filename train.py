@@ -89,31 +89,28 @@ def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_
     #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rv_difference, dim=1))
     reinforce_loss  = torch.sum(-location_log_probs * advantages, dim=1)
 
-    #return entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
-    loss = entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
-
-    return loss.mean()
+    return entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
 
 def train(modelRAM, epoch, train_loader, celoss_fn, vloss_coef, entropy_coef):
     modelRAM.train()
     train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
-        data    = data.to(device)
-        labels  = labels.to(device)
+        data        = data.to(device)
+        labels      = labels.to(device)
         optimizer.zero_grad()
         act_probs, _, location_log_probs, critic_values = modelRAM(data)
-        labels  = labels.unsqueeze(dim=1)
-        loss    = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn, vloss_coef, entropy_coef)
-        loss.backward()
+        labels      = labels.unsqueeze(dim=1)
+        loss        = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn, vloss_coef, entropy_coef)
+        loss.mean().backward()
         train_loss += loss.item()
         optimizer.step()
+
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), train_size,
                                                                             100. * batch_idx / len(train_loader),
                                                                             loss.item() / len(data)))
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(
-          epoch, train_loss / train_size))
+    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / train_size))
 
 def test(modelRAM, epoch, data_source, size):
     modelRAM.eval()
