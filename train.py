@@ -91,7 +91,7 @@ def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_
 
     #return entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
     loss = entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
-    
+
     return loss.mean()
 
 def train(modelRAM, epoch, train_loader, celoss_fn, vloss_coef, entropy_coef):
