@@ -13,10 +13,10 @@ This repo is an implementation of Reccurrent Attention Model from [Recurrent Mod
 - Step debug on a CPU device, Cuda can not.
 - python3 ./train.py
 
-## Others can help you know more
+## Others can help you learn more
 
 - https://www.mediafire.com/file/rb3f42h0jbord11/recurrent-visual-attention.tar.xz
 - python3 ./main.py --use_gpu False --is_train True --num_patches 2 --glimpse_scale 2
 
-- https://www.mediafire.com/file/null/Visual-Attention-Pytorch.tar.xz
+- https://www.mediafire.com/file/kl7epkvxrg1641n/Visual-Attention-Pytorch.tar.xz
 - python3 ./main.py --n_glimpses 6
