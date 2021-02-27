@@ -106,9 +106,10 @@ def train(modelRAM, epoch, train_loader, celoss_fn, vloss_coef, entropy_coef):
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), train_size,
-                                                                            100. * batch_idx / len(train_loader),
-                                                                            loss.item() / len(data)))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'.format(epoch,
+                                                               batch_idx * len(data),
+                                                               train_size,
+                                                               100. * batch_idx / len(train_loader)))
     #print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / train_size))
 
 def test(modelRAM, epoch, data_source, size):
