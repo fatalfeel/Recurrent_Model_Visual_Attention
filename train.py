@@ -75,9 +75,9 @@ device = torch.device("cuda:0" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
-def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn):
+def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn, rloss_ratio):
     predictions     = torch.argmax(batch_actions, dim=1, keepdim=True) #return the index of max number in a row
-    pred_loss       = celoss_fn(batch_actions, labels.squeeze())  # CrossEntropyLoss
+    action_loss     = celoss_fn(batch_actions, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
     rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
@@ -85,13 +85,12 @@ def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, cel
     baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
 
     rv_difference   = rewards - critic_values.detach()
-    #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rb_remain, dim=1))
-    reinforce_loss  = torch.sum(-location_log_probs * rv_difference, dim=1)
-    reinforce_mean  = torch.mean(reinforce_loss)
+    #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rv_difference, dim=1))
+    reinforce_loss  = torch.sum(-location_log_probs * rv_difference, dim=1).mean()
 
-    return pred_loss + baseline_loss + reinforce_mean
+    return action_loss + baseline_loss + rloss_ratio * reinforce_loss
 
-def train(modelRAM, epoch, train_loader, celoss_fn):
+def train(modelRAM, epoch, train_loader, celoss_fn, rloss_ratio):
     modelRAM.train()
     train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -100,7 +99,7 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         optimizer.zero_grad()
         batch_actions, _, location_log_probs, critic_values = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
-        loss = Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn)
+        loss = Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn, rloss_ratio)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -130,17 +129,18 @@ def test(modelRAM, epoch, data_source, size):
 
 if __name__ == "__main__":
     # training set : validation set : test set = 50000 : 10000 : 10000
-    train_set = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-    trainnum = len(train_set)
-    indices = list(range(trainnum))
-    valid_size = 10000
-    train_size = trainnum - valid_size
-    train_idx, valid_idx = indices[valid_size:], indices[:valid_size]
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
-    valid_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=valid_sampler, **kwargs)
-    test_loader = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True, **kwargs)
+    train_set               = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
+    trainnum                = len(train_set)
+    indices                 = list(range(trainnum))
+    valid_size              = 10000
+    train_size              = trainnum - valid_size
+    train_idx, valid_idx    = indices[valid_size:], indices[:valid_size]
+    train_sampler           = SubsetRandomSampler(train_idx)
+    valid_sampler           = SubsetRandomSampler(valid_idx)
+    train_loader            = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
+    valid_loader            = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=valid_sampler, **kwargs)
+    test_loader             = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True, **kwargs)
+    rloss_ratio             = 0.01
 
     modelRAM = ModelVT(location_size=args.location_size,
                        location_std=args.location_std,
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     best_valid_accuracy, test_accuracy = 0, 0
 
     for epoch in range(1, args.epochs + 1):
-        train(modelRAM, epoch, train_loader, celoss_fn)
+        train(modelRAM, epoch, train_loader, celoss_fn, rloss_ratio)
         accuracy = test(modelRAM, epoch, valid_loader, valid_size)
         scheduler.step(accuracy)
         print('====> Validation set accuracy: {:.2%}'.format(accuracy))
