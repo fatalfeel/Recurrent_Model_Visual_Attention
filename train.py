@@ -84,9 +84,9 @@ def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, cel
     #baseline_loss   = tnf.mse_loss(rewards, critic_values)
     baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
 
-    rc_difference   = rewards - critic_values.detach()
+    rv_difference   = rewards - critic_values.detach()
     #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rb_remain, dim=1))
-    reinforce_loss  = torch.sum(-location_log_probs * rc_difference, dim=1)
+    reinforce_loss  = torch.sum(-location_log_probs * rv_difference, dim=1)
     reinforce_mean  = torch.mean(reinforce_loss)
 
     return pred_loss + baseline_loss + reinforce_mean
