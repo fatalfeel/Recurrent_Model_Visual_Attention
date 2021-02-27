@@ -75,9 +75,9 @@ device = torch.device("cuda:0" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
-def Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn, rloss_ratio):
-    predictions     = torch.argmax(batch_actions, dim=1, keepdim=True) #return the index of max number in a row
-    action_loss     = celoss_fn(batch_actions, labels.squeeze())  # CrossEntropyLoss
+def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn, rloss_ratio):
+    predictions     = torch.argmax(act_probs, dim=1, keepdim=True) #return the index of max number in a row
+    action_loss     = celoss_fn(act_probs, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
     rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
@@ -97,9 +97,9 @@ def train(modelRAM, epoch, train_loader, celoss_fn, rloss_ratio):
         data    = data.to(device)
         labels  = labels.to(device)
         optimizer.zero_grad()
-        batch_actions, _, location_log_probs, critic_values = modelRAM(data)
+        act_probs, _, location_log_probs, critic_values = modelRAM(data)
         labels = labels.unsqueeze(dim=1)
-        loss = Loss_Functions(labels, batch_actions, location_log_probs, critic_values, celoss_fn, rloss_ratio)
+        loss = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn, rloss_ratio)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -118,8 +118,8 @@ def test(modelRAM, epoch, data_source, size):
         for batch_idx, (data, labels) in enumerate(data_source):
             data    = data.to(device)
             labels  = labels.to(device)
-            batch_actions, _, _, _ = modelRAM(data)
-            predictions = torch.argmax(batch_actions, dim=1)
+            act_probs, _, _, _ = modelRAM(data)
+            predictions = torch.argmax(act_probs, dim=1)
             total_correct += torch.sum((labels == predictions)).item()
     accuracy = total_correct / size
     image = data[0:1]
