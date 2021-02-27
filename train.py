@@ -81,14 +81,18 @@ def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_
 
     num_repeats     = critic_values.size(-1)
     rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
-    #baseline_loss   = tnf.mse_loss(rewards, critic_values)
-    baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
+    #baseline_loss  = tnf.mse_loss(rewards, critic_values)
+    baseline_loss   = tnf.mse_loss(critic_values, rewards)  #in ppo its mean value_loss
 
     rv_difference   = rewards - critic_values.detach()
+    advantages      = (rv_difference - rv_difference.mean()) / (rv_difference.std() + 1e-5)
     #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rv_difference, dim=1))
-    reinforce_loss  = torch.sum(-location_log_probs * rv_difference, dim=1).mean()
+    reinforce_loss  = torch.sum(-location_log_probs * advantages, dim=1)
 
-    return entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
+    #return entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
+    loss = entropy_coef * action_loss + vloss_coef * baseline_loss + reinforce_loss
+    
+    return loss.mean()
 
 def train(modelRAM, epoch, train_loader, celoss_fn, vloss_coef, entropy_coef):
     modelRAM.train()
