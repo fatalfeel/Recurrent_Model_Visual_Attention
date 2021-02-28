@@ -52,8 +52,8 @@ parser.add_argument('--num-classes', type=int, default=10, metavar='N',
 parser.add_argument('--glimpse-size', type=int, default=8, metavar='N',
                     help='glimpse image size for training (default: 8)')
 
-parser.add_argument('--num-glimpses', type=int, default=6, metavar='N',
-                    help='number of glimpses for training (default: 7)')
+parser.add_argument('--num-glimpses', type=int, default=10, metavar='N',
+                    help='number of glimpses for training (default: 6)')
 
 parser.add_argument('--num-scales', type=int, default=2, metavar='N',
                     help='number of scales (retina patch) for training (default: 2)')
@@ -174,6 +174,6 @@ if __name__ == "__main__":
             test_accuracy = test(modelRAM, epoch, test_loader, len(test_loader.dataset))
             # torch.save(modelRAM, 'save/best_model')
             print('====> Test set accuracy: {:.2%}'.format(test_accuracy))
-        print('\n')
+        print('')
 
     print('====> Test set accuracy: {:.2%}'.format(test_accuracy))
