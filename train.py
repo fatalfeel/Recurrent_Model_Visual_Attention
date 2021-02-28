@@ -52,7 +52,7 @@ parser.add_argument('--num-classes', type=int, default=10, metavar='N',
 parser.add_argument('--glimpse-size', type=int, default=8, metavar='N',
                     help='glimpse image size for training (default: 8)')
 
-parser.add_argument('--num-glimpses', type=int, default=10, metavar='N',
+parser.add_argument('--num-glimpses', type=int, default=6, metavar='N',
                     help='number of glimpses for training (default: 6)')
 
 parser.add_argument('--num-scales', type=int, default=2, metavar='N',
