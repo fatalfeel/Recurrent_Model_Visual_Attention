@@ -87,7 +87,7 @@ class LocationNetwork(nn.Module):
         - x of shape (batch_size, input_size): tensor containing the output of
           CoreNetwork
 
-    Outputs: output, log_p
+    Outputs: lt, log_p
         - output of shape (batch_size, output_size): tensor containing features
           of the next location l described in the paper
         - log_p of shape (batch_size, 1): tensor containing the log probability
@@ -112,14 +112,14 @@ class LocationNetwork(nn.Module):
 
         if self.training:
             distribution    = torch.distributions.Normal(mu, self.std)
-            output          = torch.clamp(distribution.sample(), -1.0, 1.0)
-            log_p           = distribution.log_prob(output)
+            lt              = torch.clamp(distribution.sample(), -1.0, 1.0)
+            log_p           = distribution.log_prob(lt)
             log_p           = torch.sum(log_p, dim=1)
         else:
-            output  = mu
-            log_p   = torch.ones(output.size(0))
+            lt      = mu
+            log_p   = torch.ones(lt.size(0))
 
-        return output, log_p
+        return lt, log_p
 
 #in ppo its a actor network
 class ActorNetwork(nn.Module):
