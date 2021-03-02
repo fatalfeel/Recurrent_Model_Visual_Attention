@@ -128,14 +128,14 @@ class ModelVT(nn.Module):
         critic_values       = torch.empty(batch_size, self.num_glimpses).to(self.device)
 
         for i in range(self.num_glimpses):
-            locations[:, i]             = location
             #paper p4. low-resolution representation as a glimpse
             glimpse                     = self.Retina(data, location.detach(), self.glimpse_size, self.num_scales)
             gt                          = self.glimpse_network(glimpse, location)
             ht, ct                      = self.core_network(gt, ht, ct)
             location, log_prob          = self.fl(ht)
-            cvalue                      = self.critic_network(ht)
+            locations[:, i]             = location
             location_log_probs[:, i]    = log_prob
+            cvalue                      = self.critic_network(ht)
             critic_values[:, i]         = cvalue.squeeze()
 
         act_probs = self.fa(ht) #classifier
