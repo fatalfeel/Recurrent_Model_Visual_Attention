@@ -104,6 +104,7 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
+
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format( epoch,
                                                                             batch_idx * len(data),
@@ -118,15 +119,17 @@ def test(modelRAM, epoch, data_source, size):
     total_correct = 0.0
     with torch.no_grad():
         for batch_idx, (data, labels) in enumerate(data_source):
-            data    = data.to(device)
-            labels  = labels.to(device)
-            act_probs, _, _, _ = modelRAM(data)
-            predictions = torch.argmax(act_probs, dim=1)
-            total_correct += torch.sum((labels == predictions)).item()
-    accuracy = total_correct / size
-    image = data[0:1]
-    _, locations, _, _ = modelRAM(image)
+            data                = data.to(device)
+            labels              = labels.to(device)
+            act_probs, _, _, _  = modelRAM(data)
+            predictions         = torch.argmax(act_probs, dim=1)
+            total_correct      += torch.sum((labels == predictions)).item()
+
+    accuracy            = total_correct / size
+    image               = data[0:1]
+    _, locations, _, _  = modelRAM(image)
     draw_locations(image.cpu().numpy()[0][0], locations.detach().cpu().numpy()[0], epoch=epoch)
+
     return accuracy
 
 if __name__ == "__main__":

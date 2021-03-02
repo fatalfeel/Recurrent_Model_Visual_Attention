@@ -96,14 +96,14 @@ class LocationNetwork(nn.Module):
     '''Paper original: The location network outputs the mean of the location policy at timetand is defined as 
        fl(h) = Linear(h) where his the state of the core network/RNN 
        New way: fl(fc(h))'''
-    def __init__(self, input_size, output_size, std=1e-3):
+    def __init__(self, input_size, location_size, std):
         super(LocationNetwork, self).__init__()
 
         self.std    = std
-        #self.fc    = nn.Linear(input_size, output_size)
-        hiddensize  = input_size // 2
-        self.fc     = nn.Linear(input_size, hiddensize)
-        self.fl     = nn.Linear(hiddensize, output_size)
+        #self.fc    = nn.Linear(input_size, location_size)
+        hidden_size = input_size // 2
+        self.fc     = nn.Linear(input_size, hidden_size)
+        self.fl     = nn.Linear(hidden_size, location_size)
 
     def forward(self, ht):
         #mu = torch.tanh(self.fc(ht.detach()))
