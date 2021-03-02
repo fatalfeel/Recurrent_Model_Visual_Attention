@@ -123,9 +123,9 @@ class ModelVT(nn.Module):
 
         #location = self.init_location(batch_size)
         location            = torch.FloatTensor(batch_size, self.location_size).uniform_(-1, 1).to(self.device)
-        location_log_probs  = torch.empty(batch_size, self.num_glimpses).to(self.device)
-        locations           = torch.empty(batch_size, self.num_glimpses, self.location_size).to(self.device)
-        critic_values       = torch.empty(batch_size, self.num_glimpses).to(self.device)
+        location_log_probs  = torch.zeros(batch_size,       self.num_glimpses).to(self.device)
+        locations           = torch.zeros(batch_size,       self.num_glimpses, self.location_size).to(self.device)
+        critic_values       = torch.zeros(batch_size,       self.num_glimpses).to(self.device)
 
         for i in range(self.num_glimpses):
             #paper p4. low-resolution representation as a glimpse
