@@ -66,8 +66,8 @@ class CoreNetwork(nn.Module):
 
     def forward(self, g, prev_h, prev_c):
         #h = self.rnn_cell(g, prev_h)
-        h, c = self.rnn_cell(g, (prev_h, prev_c))
-        return h, c
+        ht, ct = self.rnn_cell(g, (prev_h, prev_c))
+        return ht, ct
 
     '''def init_hidden(self, batch_size):
         hidden_layer = torch.zeros(batch_size, self.hidden_size).to(self.device)
