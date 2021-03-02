@@ -97,10 +97,12 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
     for batch_idx, (data, labels) in enumerate(train_loader):
         data    = data.to(device)
         labels  = labels.to(device)
-        optimizer.zero_grad()
-        act_probs, _, location_log_probs, critic_values = modelRAM(data)
         labels  = labels.unsqueeze(dim=1)
-        loss    = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn)
+
+        act_probs, _, location_log_probs, critic_values = modelRAM(data)
+        loss = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn)
+
+        optimizer.zero_grad()
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
