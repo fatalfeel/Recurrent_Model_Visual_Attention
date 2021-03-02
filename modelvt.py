@@ -122,7 +122,7 @@ class ModelVT(nn.Module):
         ct          = torch.zeros(batch_size, self.core_network.hidden_size).to(self.device)
 
         #location = self.init_location(batch_size)
-        location            = torch.zeros(batch_size, self.location_size).to(self.device)
+        location            = torch.FloatTensor(batch_size, self.location_size).uniform_(-1, 1).to(self.device)
         location_log_probs  = torch.empty(batch_size, self.num_glimpses).to(self.device)
         locations           = torch.empty(batch_size, self.num_glimpses, self.location_size).to(self.device)
         critic_values       = torch.empty(batch_size, self.num_glimpses).to(self.device)

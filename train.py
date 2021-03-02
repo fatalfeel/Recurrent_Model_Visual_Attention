@@ -53,7 +53,7 @@ parser.add_argument('--glimpse-size', type=int, default=8, metavar='N',
                     help='glimpse image size for training (default: 8)')
 
 parser.add_argument('--num-glimpses', type=int, default=6, metavar='N',
-                    help='number of glimpses for training (default: 6)')
+                    help='number of glimpses for training (default: 7)')
 
 parser.add_argument('--num-scales', type=int, default=2, metavar='N',
                     help='number of scales (retina patch) for training (default: 2)')
@@ -75,42 +75,42 @@ device = torch.device("cuda:0" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
-def CalculateLoss(labels, act_probs, location_log_probs, critic_values, celoss_fn, rloss_coef):
+def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn):
     predictions     = torch.argmax(act_probs, dim=1, keepdim=True) #return the index of max number in a row
-    action_loss     = celoss_fn(act_probs, labels.squeeze())  # CrossEntropyLoss
+    action_loss       = celoss_fn(act_probs, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
     rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
-    #baseline_loss  = tnf.mse_loss(rewards, critic_values)
-    baseline_loss   = tnf.mse_loss(critic_values, rewards)  #in ppo its mean value_loss
+    #baseline_loss   = tnf.mse_loss(rewards, critic_values)
+    baseline_loss   = tnf.mse_loss(critic_values, rewards)  #ppo value_losses
 
-    rv_difference   = rewards - critic_values.detach()
-    advantages      = (rv_difference - rv_difference.mean()) / (rv_difference.std() + 1e-5)
-    #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rv_difference, dim=1))
-    reinforce_loss  = torch.sum(-location_log_probs * advantages, dim=1).mean()
+    rc_difference   = rewards - critic_values.detach()
+    #reinforce_loss  = torch.mean(torch.sum(-location_log_probs * rb_remain, dim=1))
+    reinforce_loss  = torch.sum(-location_log_probs * rc_difference, dim=1)
+    reinforce_mean  = torch.mean(reinforce_loss)
 
-    return action_loss + baseline_loss + reinforce_loss * rloss_coef
+    return action_loss + baseline_loss + reinforce_mean
 
-def train(modelRAM, epoch, train_loader, celoss_fn, rloss_coef):
+def train(modelRAM, epoch, train_loader, celoss_fn):
     modelRAM.train()
-    #train_loss = 0
+    train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
-        data        = data.to(device)
-        labels      = labels.to(device)
+        data    = data.to(device)
+        labels  = labels.to(device)
         optimizer.zero_grad()
         act_probs, _, location_log_probs, critic_values = modelRAM(data)
-        labels      = labels.unsqueeze(dim=1)
-        loss        = CalculateLoss(labels, act_probs, location_log_probs, critic_values, celoss_fn, rloss_coef)
+        labels = labels.unsqueeze(dim=1)
+        loss = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn)
         loss.backward()
-        #train_loss += loss.item()
+        train_loss += loss.item()
         optimizer.step()
-
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'.format(epoch,
-                                                               batch_idx * len(data),
-                                                               train_size,
-                                                               100. * batch_idx / len(train_loader)))
-    #print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / train_size))
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), train_size,
+                                                                            100. * batch_idx / len(train_loader),
+                                                                            loss.item() / len(data)))
+
+    print('====> Epoch: {} Average loss: {:.4f}'.format(
+          epoch, train_loss / train_size))
 
 def test(modelRAM, epoch, data_source, size):
     modelRAM.eval()
@@ -130,18 +130,17 @@ def test(modelRAM, epoch, data_source, size):
 
 if __name__ == "__main__":
     # training set : validation set : test set = 50000 : 10000 : 10000
-    train_set               = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-    trainnum                = len(train_set)
-    indices                 = list(range(trainnum))
-    valid_size              = 10000
-    train_size              = trainnum - valid_size
-    train_idx, valid_idx    = indices[valid_size:], indices[:valid_size]
-    train_sampler           = SubsetRandomSampler(train_idx)
-    valid_sampler           = SubsetRandomSampler(valid_idx)
-    train_loader            = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
-    valid_loader            = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=valid_sampler, **kwargs)
-    test_loader             = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True, **kwargs)
-    rloss_coef              = 0.01
+    train_set = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
+    trainnum = len(train_set)
+    indices = list(range(trainnum))
+    valid_size = 10000
+    train_size = trainnum - valid_size
+    train_idx, valid_idx = indices[valid_size:], indices[:valid_size]
+    train_sampler = SubsetRandomSampler(train_idx)
+    valid_sampler = SubsetRandomSampler(valid_idx)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
+    valid_loader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size, sampler=valid_sampler, **kwargs)
+    test_loader = torch.utils.data.DataLoader(datasets.MNIST('data', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size, shuffle=True, **kwargs)
 
     modelRAM = ModelVT(location_size=args.location_size,
                        location_std=args.location_std,
@@ -166,7 +165,7 @@ if __name__ == "__main__":
     best_valid_accuracy, test_accuracy = 0, 0
 
     for epoch in range(1, args.epochs + 1):
-        train(modelRAM, epoch, train_loader, celoss_fn, rloss_coef)
+        train(modelRAM, epoch, train_loader, celoss_fn)
         accuracy = test(modelRAM, epoch, valid_loader, valid_size)
         scheduler.step(accuracy)
         print('====> Validation set accuracy: {:.2%}'.format(accuracy))

@@ -110,14 +110,21 @@ class LocationNetwork(nn.Module):
         feature = tnf.relu(self.fc(ht.detach()))
         mu      = torch.tanh(self.fl(feature))
 
-        if self.training:
+        '''if self.training:
             distribution    = torch.distributions.Normal(mu, self.std)
-            lt              = torch.clamp(distribution.sample(), -1.0, 1.0)
+            lt              = distribution.sample()
             log_p           = distribution.log_prob(lt)
             log_p           = torch.sum(log_p, dim=1)
+            lt              = torch.clamp(lt,-1.0, 1.0)
         else:
-            lt      = mu
-            log_p   = torch.ones(lt.size(0))
+            output  = mu
+            log_p   = torch.ones(output.size(0))'''
+
+        distribution    = torch.distributions.Normal(mu, self.std)
+        lt              = distribution.sample()
+        log_p           = distribution.log_prob(lt)
+        log_p           = torch.sum(log_p, dim=1)
+        lt              = torch.clamp(lt, -1.0, 1.0)
 
         return lt, log_p
 
