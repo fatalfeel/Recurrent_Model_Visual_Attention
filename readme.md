@@ -3,7 +3,7 @@
 ## Introduction
 This repo is an implementation of Reccurrent Attention Model from [Recurrent Models of Visual Attention](http://papers.nips.cc/paper/5542-recurrent-models-of-visual-attention.pdf). It with a lot of comments and set image show let you easier to understand.
 
-Using glimpses 6 after traning 400 epochs the best validation accuracy is 99.18%
+Using glimpses 6 after traning 100 epochs the best validation accuracy is 99.12%
 
 ## Requirements
 
