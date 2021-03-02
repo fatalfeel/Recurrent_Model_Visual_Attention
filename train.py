@@ -43,7 +43,7 @@ parser.add_argument('--input-size', type=int, default=28, metavar='N',
 parser.add_argument('--location-size', type=int, default=2, metavar='N',
                     help='input location size for training (default: 2)')
 
-parser.add_argument('--location-std', type=float, default=0.15, metavar='N',
+parser.add_argument('--location-std', type=float, default=0.25, metavar='N',
                     help='standard deviation used by location network (default: 0.15)')
 
 parser.add_argument('--num-classes', type=int, default=10, metavar='N',
@@ -53,7 +53,7 @@ parser.add_argument('--glimpse-size', type=int, default=8, metavar='N',
                     help='glimpse image size for training (default: 8)')
 
 parser.add_argument('--num-glimpses', type=int, default=6, metavar='N',
-                    help='number of glimpses for training (default: 7)')
+                    help='number of glimpses for training (default: 6)')
 
 parser.add_argument('--num-scales', type=int, default=2, metavar='N',
                     help='number of scales (retina patch) for training (default: 2)')
@@ -77,7 +77,7 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 #practice (h.) NLL-Loss & CrossEntropyLoss - nll_crossEntropy.py
 def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn):
     predictions     = torch.argmax(act_probs, dim=1, keepdim=True) #return the index of max number in a row
-    action_loss       = celoss_fn(act_probs, labels.squeeze())  # CrossEntropyLoss
+    action_loss     = celoss_fn(act_probs, labels.squeeze())  # CrossEntropyLoss
 
     num_repeats     = critic_values.size(-1)
     rewards         = (predictions == labels).detach().float().repeat(1, num_repeats)
@@ -99,8 +99,8 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         labels  = labels.to(device)
         optimizer.zero_grad()
         act_probs, _, location_log_probs, critic_values = modelRAM(data)
-        labels = labels.unsqueeze(dim=1)
-        loss = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn)
+        labels  = labels.unsqueeze(dim=1)
+        loss    = Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_fn)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
