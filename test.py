@@ -78,13 +78,15 @@ def Retina(data, location, output_size, nsc):
     # Transform image to retina representation
     batch_size, input_size = data.size(0), data.size(2) - 1
 
-    scale = output_size / input_size
+    scale   = output_size / input_size
     orisize = torch.Size([batch_size, 1, output_size, output_size])
 
     # construct theta for affine transformation
-    theta = torch.zeros(batch_size, 2, 3).to(device)
-    theta[:, :, 2] = location
-    output = torch.zeros(batch_size, output_size * output_size * nsc).to(device)
+    fillsize        = output_size * output_size
+    theta           = torch.zeros(batch_size, 2, 3).to(device)
+    theta[:, :, 2]  = location
+    #output         = torch.zeros(batch_size, output_size * output_size * nsc).to(device)
+    output          = torch.zeros(batch_size, nsc * fillsize).to(device)
 
     for i in range(nsc):
         # theta is location shift
@@ -99,10 +101,8 @@ def Retina(data, location, output_size, nsc):
         glimpse = sample.view(batch_size, -1)
 
         # output[:, i * output_size*output_size: (i + 1) * output_size*output_size] = glimpse
-        fillsize = output_size * output_size
-        pos_start = i * fillsize
-        pos_end = (i + 1) * fillsize
-        output[:, pos_start: pos_end] = glimpse
+        # pos_start = i * fillsize : pos_end = (i + 1) * fillsize
+        output[:, i*fillsize : (i+1)*fillsize] = glimpse
         scale *= 2.0
 
     return output.detach()

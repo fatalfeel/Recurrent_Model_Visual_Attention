@@ -90,9 +90,11 @@ class ModelVT(nn.Module):
         orisize = torch.Size([batch_size, 1, output_size, output_size])
 
         # construct theta for affine transformation
+        fillsize        = output_size * output_size
         theta           = torch.zeros(batch_size, 2, 3).to(self.device)
         theta[:, :, 2]  = location
-        output          = torch.zeros(batch_size, output_size * output_size * nsc).to(self.device)
+        #output         = torch.zeros(batch_size, output_size * output_size * nsc).to(self.device)
+        output          = torch.zeros(batch_size, nsc * fillsize).to(self.device)
 
         for i in range(nsc):
             # theta is location shift
@@ -107,10 +109,8 @@ class ModelVT(nn.Module):
             glimpse = sample.view(batch_size, -1)
 
             #output[:, i * output_size*output_size: (i + 1) * output_size*output_size] = glimpse
-            fillsize    = output_size*output_size
-            pos_start   =  i    * fillsize
-            pos_end     = (i+1) * fillsize
-            output[:, pos_start : pos_end] = glimpse
+            #pos_start = i * fillsize : pos_end = (i + 1) * fillsize
+            output[:, i*fillsize : (i+1)*fillsize] = glimpse
             scale *= 2.0
 
         return output.detach()
