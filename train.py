@@ -91,7 +91,7 @@ def Loss_Functions(labels, act_probs, location_log_probs, critic_values, celoss_
 
     return action_loss + baseline_loss + reinforce_mean
 
-def train(modelRAM, epoch, train_loader, celoss_fn):
+def train(modelRAM, epoch, train_loader, size, celoss_fn):
     modelRAM.train()
     train_loss = 0
     for batch_idx, (data, labels) in enumerate(train_loader):
@@ -110,11 +110,11 @@ def train(modelRAM, epoch, train_loader, celoss_fn):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format( epoch,
                                                                             batch_idx * len(data),
-                                                                            train_size,
+                                                                            size,
                                                                             100. * batch_idx / len(train_loader),
                                                                             loss.item() / len(data)) )
 
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / train_size))
+    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / size))
 
 def test(modelRAM, epoch, data_source, size):
     modelRAM.eval()
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     best_valid_accuracy, test_accuracy = 0, 0
 
     for epoch in range(1, args.epochs + 1):
-        train(modelRAM, epoch, train_loader, celoss_fn)
+        train(modelRAM, epoch, train_loader, train_size, celoss_fn)
         accuracy = test(modelRAM, epoch, valid_loader, valid_size)
         scheduler.step(accuracy)
         print('====> Validation set accuracy: {:.2%}'.format(accuracy))
