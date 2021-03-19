@@ -132,9 +132,9 @@ class ModelVT(nn.Module):
             glimpse                     = self.Retina(data, location.detach(), self.glimpse_size, self.num_scales)
             gt                          = self.glimpse_network(glimpse, location)
             ht, ct                      = self.core_network(gt, ht, ct)
-            location, log_prob          = self.fl(ht)
+            location, loc_prob          = self.fl(ht)
             locations[:, i]             = location
-            location_log_probs[:, i]    = log_prob
+            location_log_probs[:, i]    = loc_prob
             cvalue                      = self.critic_network(ht)
             critic_values[:, i]         = cvalue.squeeze()
 
