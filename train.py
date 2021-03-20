@@ -9,10 +9,10 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from modelvt import ModelVT
 from utils import draw_locations
 
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+def str2bool(b_str):
+    if b_str.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    elif b_str.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
 
 parser = argparse.ArgumentParser(description='Args of Train')
