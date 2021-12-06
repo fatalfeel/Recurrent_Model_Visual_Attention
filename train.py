@@ -28,7 +28,7 @@ parser.add_argument('--epochs', type=int, default=10, metavar='N',
 
 #parser.add_argument('--no-cuda', action='store_true', default=True,
 #default=False for step debug
-parser.add_argument('--cuda', type=str2bool, default=False,
+parser.add_argument('--cuda', type=str2bool, default=True,
                     help='enables CUDA training')
 
 parser.add_argument('--seed', type=int, default=1, metavar='S',
