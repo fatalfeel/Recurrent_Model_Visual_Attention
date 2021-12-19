@@ -16,57 +16,24 @@ def str2bool(b_str):
         return False
 
 parser = argparse.ArgumentParser(description='Args of Train')
-
-parser.add_argument('--batch-size', type=int, default=20, metavar='N',
-                    help='input batch size for training (default: 20)')
-
-parser.add_argument('--lr', type=float, default=1e-3, metavar='N',
-                    help='init learning rate (default: 1e-3)')
-
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                    help='number of epochs to train (default: 10)')
-
+parser.add_argument('--batch-size',             type=int,       default=20,     metavar='N',    help='input batch size for training (default: 20)')
+parser.add_argument('--lr',                     type=float,     default=1e-3,   metavar='N',    help='init learning rate (default: 1e-3)')
+parser.add_argument('--epochs',                 type=int,       default=10,     metavar='N',    help='number of epochs to train (default: 10)')
 #parser.add_argument('--no-cuda', action='store_true', default=True,
 #default=False for step debug
-parser.add_argument('--cuda', type=str2bool, default=True,
-                    help='enables CUDA training')
-
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
-
-parser.add_argument('--log-interval', type=int, default=500, metavar='N',
-                    help='how many batches to wait before logging training status')
-
-parser.add_argument('--input-size', type=int, default=28, metavar='N',
-                    help='input image size for training (default: 28)')
-
-parser.add_argument('--location-size', type=int, default=2, metavar='N',
-                    help='input location size for training (default: 2)')
-
-parser.add_argument('--location-std', type=float, default=0.25, metavar='N',
-                    help='standard deviation used by location network (default: 0.15)')
-
-parser.add_argument('--num-classes', type=int, default=10, metavar='N',
-                    help='input action size (number of classes) for training (default: 10)')
-
-parser.add_argument('--glimpse-size', type=int, default=8, metavar='N',
-                    help='glimpse image size for training (default: 8)')
-
-parser.add_argument('--num-glimpses', type=int, default=6, metavar='N',
-                    help='number of glimpses for training (default: 6)')
-
-parser.add_argument('--num-scales', type=int, default=2, metavar='N',
-                    help='number of scales (retina patch) for training (default: 2)')
-
-parser.add_argument('--feature-size', type=int, default=128, metavar='N',
-                    help='location and input glimpse feature size for training (default: 128)')
-
-parser.add_argument('--glimpse-feature-size', type=int, default=256, metavar='N',
-                    help='output glimpse feature size for training (default: 256)')
-
-parser.add_argument('--hidden-size', type=int, default=256, metavar='N',
-                    help='feature size for RNN (default: 256)')
-
+parser.add_argument('--cuda',                   type=str2bool,  default=False,                  help='enables CUDA training')
+parser.add_argument('--seed',                   type=int,       default=1,      metavar='S',    help='random seed (default: 1)')
+parser.add_argument('--log-interval',           type=int,       default=500,    metavar='N',    help='how many batches to wait before logging training status')
+parser.add_argument('--input-size',             type=int,       default=28,     metavar='N',    help='input image size for training (default: 28)')
+parser.add_argument('--location-size',          type=int,       default=2,      metavar='N',    help='input location size for training (default: 2)')
+parser.add_argument('--location-std',           type=float,     default=0.25,   metavar='N',    help='standard deviation used by location network (default: 0.15)')
+parser.add_argument('--num-classes',            type=int,       default=10,     metavar='N',    help='input action size (number of classes) for training (default: 10)')
+parser.add_argument('--glimpse-size',           type=int,       default=8,      metavar='N',    help='glimpse image size for training (default: 8)')
+parser.add_argument('--num-glimpses',           type=int,       default=6,      metavar='N',    help='number of glimpses for training (default: 6)')
+parser.add_argument('--num-scales',             type=int,       default=2,      metavar='N',    help='number of scales (retina patch) for training (default: 2)')
+parser.add_argument('--feature-size',           type=int,       default=128,    metavar='N',    help='location and input glimpse feature size for training (default: 128)')
+parser.add_argument('--glimpse-feature-size',   type=int,       default=256,    metavar='N',    help='output glimpse feature size for training (default: 256)')
+parser.add_argument('--hidden-size',            type=int,       default=256,    metavar='N',    help='feature size for RNN (default: 256)')
 args = parser.parse_args()
 
 assert args.glimpse_size * 2**(args.num_scales - 1) <= args.input_size, "glimpse_size * 2**(num_scales-1) should smaller than or equal to input-size"
